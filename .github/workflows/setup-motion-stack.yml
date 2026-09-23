@@ -1,0 +1,38 @@
+name: setup-motion-stack
+
+on:
+  push:
+    branches:
+      - setup/motion-stack
+
+permissions:
+  contents: write
+
+jobs:
+  install-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: Install GSAP Agent Skills
+        run: npx skills add https://github.com/greensock/gsap-skills --agent codex --copy -y
+      - name: Install LottieFiles Motion Design Skill
+        run: npx skills add https://github.com/LottieFiles/motion-design-skill --agent codex --copy -y
+      - name: Validate skills
+        run: |
+          test -d .agents/skills
+          find .agents/skills -name SKILL.md -print
+      - name: Validate Astro
+        run: npm run check
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json .agents/skills
+          git diff --cached --quiet || git commit -m "chore: install motion skills"
+          git push origin HEAD:setup/motion-stack
